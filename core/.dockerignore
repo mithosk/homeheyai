@@ -1,0 +1,7 @@
+.env
+.idea
+.venv/
+README.md
+Dockerfile
+.dockerignore
+src/__pycache__/

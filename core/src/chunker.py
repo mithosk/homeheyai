@@ -98,3 +98,31 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
         save_chunks(chunk_batch, qdrant_client, gemini_client)
 
     print(f"End of refreshing chunks from {directory_path}\n")
+
+def get_chunks(query: str,qdrant_client: QdrantClient,gemini_client: Client) -> list[str]:
+    cleaned_query = clean_text(query)
+
+    embed_response = gemini_client.models.embed_content(
+        model=EMBEDDING_MODEL,
+        contents=cleaned_query,
+        config=EmbedContentConfig(
+            output_dimensionality=VECTOR_SIZE,
+        )
+    )
+
+    response = qdrant_client.query_points(
+        collection_name=COLLECTION_NAME,
+        query=[float(value) for value in (embed_response.embeddings[0].values or [])], #type: ignore
+        limit=5,
+        with_payload=True,
+    )
+
+    result: list[str] = []
+
+    for point in response.points:
+        if point.payload:
+            value = point.payload.get("value")
+            if isinstance(value, str):
+                result.append(value)
+
+    return result

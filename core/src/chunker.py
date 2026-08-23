@@ -14,7 +14,8 @@ VECTOR_SIZE = 3072
 BATCH_SIZE = 100
 COLLECTION_NAME = "knowledge"
 EMBEDDING_MODEL = "gemini-embedding-2"
-
+QUERY_POINTS_LIMIT=5
+SCORE_THRESHOLD=0.55
 
 def extract_text(file_path: Path) -> str:
     try:
@@ -150,9 +151,9 @@ def get_chunks(
 
     response = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
-        query=[float(value) for value in (embed_response.embeddings[0].values or [])],
-        limit=5,
-        score_threshold=score_threshold,
+        query=[float(value) for value in (embed_response.embeddings[0].values or [])], # type: ignore[arg-type]
+        limit=QUERY_POINTS_LIMIT,
+        score_threshold=SCORE_THRESHOLD,
         with_payload=True,
     )
 

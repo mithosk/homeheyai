@@ -27,26 +27,37 @@ def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
-def save_chunks(chunk_batch: list[dict], qdrant_client: QdrantClient, gemini_client: Client):
+def save_chunks(
+    chunk_batch: list[dict],
+    qdrant_client: QdrantClient,
+    gemini_client: Client,
+):
     if not chunk_batch:
         return
 
-    embed_response = gemini_client.models.embed_content(
-        model=EMBEDDING_MODEL,
-        contents=[item["value"] for item in chunk_batch],
-        config=EmbedContentConfig(
-            output_dimensionality=VECTOR_SIZE,
-            task_type="RETRIEVAL_DOCUMENT"
-        ),
-    )
-
-    embeddings = embed_response.embeddings or []
-
     points = []
-    for chunk, embedding in zip(chunk_batch, embeddings):
+
+    for chunk in chunk_batch:
+        embed_response = gemini_client.models.embed_content(
+            model=EMBEDDING_MODEL,
+            contents=chunk["value"],
+            config=EmbedContentConfig(
+                output_dimensionality=VECTOR_SIZE,
+                task_type="RETRIEVAL_DOCUMENT",
+            ),
+        )
+
+        embeddings = embed_response.embeddings or []
+
+        if not embeddings:
+            print(f"WARNING: nessun embedding per {chunk['pattern']}")
+            continue
+
+        embedding = embeddings[0]
+
         points.append(
             PointStruct(
-                id=str(uuid.uuid4()),  # Generato distintamente ad ogni iterazione del ciclo for
+                id=str(uuid.uuid4()),
                 vector=[float(value) for value in (embedding.values or [])],
                 payload={
                     "pattern": chunk["pattern"],
@@ -54,6 +65,9 @@ def save_chunks(chunk_batch: list[dict], qdrant_client: QdrantClient, gemini_cli
                 },
             )
         )
+
+    if not points:
+        return
 
     qdrant_client.upsert(
         collection_name=COLLECTION_NAME,

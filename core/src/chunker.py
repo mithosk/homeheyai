@@ -40,7 +40,7 @@ def save_chunks(
     for chunk in chunk_batch:
         embed_response = gemini_client.models.embed_content(
             model=EMBEDDING_MODEL,
-            contents=chunk["value"],
+            contents=f"{chunk['pattern']}\n{chunk['value']}",
             config=EmbedContentConfig(
                 output_dimensionality=VECTOR_SIZE,
                 task_type="RETRIEVAL_DOCUMENT",

@@ -17,6 +17,8 @@ EMBEDDING_MODEL = "gemini-embedding-2"
 QUERY_POINTS_LIMIT=5
 SCORE_THRESHOLD=0.55
 
+# ----------> LUN
+
 def extract_text(file_path: Path) -> str:
     try:
         return file_path.read_text(encoding="utf-8")
@@ -26,6 +28,9 @@ def extract_text(file_path: Path) -> str:
 
 def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+# ----------> MAR
 
 
 def save_chunks(
@@ -77,6 +82,7 @@ def save_chunks(
 
     print(f"Salvati {len(points)} chunk in Qdrant.")
 
+# ----------> MER
 
 def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_client: Client):
     print(f"Start refreshing chunks from: {directory_path}")
@@ -127,10 +133,16 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     info = qdrant_client.get_collection(COLLECTION_NAME)
     print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")
 
-    xxxxx = get_chunks("lion and hulk", qdrant_client, gemini_client)
-    print(f"\n\n{len(xxxxx)}")
+    xxxxx = get_chunks("animals ", qdrant_client, gemini_client)
+    print(f"\n\n\n\n\n\n---------->{len(xxxxx)}")
     for chunk in xxxxx:
+        print(f"\n----------------------------")
         print(f"\n- {chunk}")
+        print(f"\n----------------------------")
+
+
+# ----------> GIO
+
 
 def get_chunks(
     query: str,
@@ -165,3 +177,5 @@ def get_chunks(
             result.append(point.payload["value"])
 
     return result
+
+# ----------> VEN

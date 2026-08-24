@@ -13,7 +13,7 @@ CHUNK_OVERLAP = 150
 VECTOR_SIZE = 3072
 BATCH_SIZE = 100
 COLLECTION_NAME = "knowledge"
-EMBEDDING_MODEL = "gemini-embedding-2"
+EMBEDDING_MODEL = "gemini-embedding-001"
 QUERY_POINTS_LIMIT=5
 SCORE_THRESHOLD=0.55
 
@@ -133,12 +133,11 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     info = qdrant_client.get_collection(COLLECTION_NAME)
     print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")
 
-    xxxxx = get_chunks("animals ", qdrant_client, gemini_client)
+    xxxxx = get_chunks("lion and superman", qdrant_client, gemini_client)
     print(f"\n\n\n\n\n\n---------->{len(xxxxx)}")
     for chunk in xxxxx:
-        print(f"\n----------------------------")
+        print(f"\n£££££££££££££££££££££££££££££££££££££")
         print(f"\n- {chunk}")
-        print(f"\n----------------------------")
 
 
 # ----------> GIO

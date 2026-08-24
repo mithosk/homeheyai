@@ -18,7 +18,7 @@ EMBEDDING_MODEL = "gemini-embedding-001"
 QUERY_POINTS_LIMIT=5
 SCORE_THRESHOLD=0.55
 
-# ----------> LUN / SAB
+# 00001/00006----------> LUN / SAB
 
 def extract_text(file_path: Path) -> str:
     try:
@@ -31,7 +31,7 @@ def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
-# ----------> MAR
+# 00002----------> MAR
 
 
 def save_chunks(
@@ -83,7 +83,7 @@ def save_chunks(
 
     print(f"Salvati {len(points)} chunk in Qdrant.")
 
-# ----------> MER
+# 00003----------> MER
 
 def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_client: Client):
     print(f"Start refreshing chunks from: {directory_path}")
@@ -141,7 +141,7 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
         print(f"\n- {chunk}")
 
 
-# ----------> GIO
+# 00004----------> GIO
 
 
 def get_chunks(
@@ -178,4 +178,4 @@ def get_chunks(
 
     return result
 
-# ----------> VEN
+# 00005----------> VEN

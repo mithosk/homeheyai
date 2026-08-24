@@ -133,7 +133,7 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     info = qdrant_client.get_collection(COLLECTION_NAME)
     print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")
 
-    xxxxx = get_chunks("lion and superman", qdrant_client, gemini_client)
+    xxxxx = get_chunks("qwbd wq qewhbd he bdhe lion and superman jwdvn rwjvn rjwn vrj wjiev", qdrant_client, gemini_client)
     print(f"\n\n\n\n\n\n---------->{len(xxxxx)}")
     for chunk in xxxxx:
         print(f"\n£££££££££££££££££££££££££££££££££££££")

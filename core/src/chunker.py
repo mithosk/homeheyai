@@ -7,6 +7,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
+
 MIN_CHUNK_LEN = 30
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
@@ -17,7 +18,7 @@ EMBEDDING_MODEL = "gemini-embedding-001"
 QUERY_POINTS_LIMIT=5
 SCORE_THRESHOLD=0.55
 
-# ----------> LUN
+# ----------> LUN / SAB
 
 def extract_text(file_path: Path) -> str:
     try:

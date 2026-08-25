@@ -20,18 +20,8 @@ VECTOR_SIZE = 3072
 
 # 00006----------> SAB
 
-def extract_text(file_path: Path) -> str:
-    try:
-        return file_path.read_text(encoding="utf-8")
-    except (FileNotFoundError, PermissionError, UnicodeDecodeError):
-        return ""
-
-
 def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
-
-
-# 00002----------> MAR
 
 
 def save_chunks(
@@ -109,7 +99,7 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     total_chunks_created = 0
 
     for file_path in Path(directory_path).rglob("*.md"):
-        file_text = extract_text(file_path)
+        file_text = file_path.read_text(encoding="utf-8")
         cleaned_file_text = clean_text(file_text)
         chunks = text_splitter.split_text(cleaned_file_text)
 

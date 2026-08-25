@@ -2,23 +2,23 @@ import re
 import uuid
 from pathlib import Path
 from google.genai import Client
+from qdrant_client import QdrantClient
 from google.genai.types import EmbedContentConfig
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-
-MIN_CHUNK_LEN = 30
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
-VECTOR_SIZE = 3072
 BATCH_SIZE = 100
+CHUNK_OVERLAP = 150
+CHUNK_SIZE = 1000
 COLLECTION_NAME = "knowledge"
-EMBEDDING_MODEL = "gemini-embedding-001"
-QUERY_POINTS_LIMIT=5
-SCORE_THRESHOLD=0.55
+EMBEDDING_MODEL = "gemini-embedding-2"
+MIN_CHUNK_LEN = 30
+QUERY_POINTS_LIMIT = 5
+SCORE_THRESHOLD = 0.45
+VECTOR_SIZE = 3072
 
-# 00001/00006----------> LUN / SAB
+
+# 00006----------> SAB
 
 def extract_text(file_path: Path) -> str:
     try:
@@ -35,9 +35,9 @@ def clean_text(text: str) -> str:
 
 
 def save_chunks(
-    chunk_batch: list[dict],
-    qdrant_client: QdrantClient,
-    gemini_client: Client,
+        chunk_batch: list[dict],
+        qdrant_client: QdrantClient,
+        gemini_client: Client,
 ):
     if not chunk_batch:
         return
@@ -82,6 +82,7 @@ def save_chunks(
     )
 
     print(f"Salvati {len(points)} chunk in Qdrant.")
+
 
 # 00003----------> MER
 
@@ -134,7 +135,8 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     info = qdrant_client.get_collection(COLLECTION_NAME)
     print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")
 
-    xxxxx = get_chunks("qwbd wq qewhbd he bdhe lion and superman jwdvn rwjvn rjwn vrj wjiev", qdrant_client, gemini_client)
+    xxxxx = get_chunks("qwbd wq qewhbd he bdhe lion and superman jwdvn rwjvn rjwn vrj wjiev", qdrant_client,
+                       gemini_client)
     print(f"\n\n\n\n\n\n---------->{len(xxxxx)}")
     for chunk in xxxxx:
         print(f"\n£££££££££££££££££££££££££££££££££££££")
@@ -145,10 +147,10 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
 
 
 def get_chunks(
-    query: str,
-    qdrant_client: QdrantClient,
-    gemini_client: Client,
-    score_threshold: float = 0.35,  # Soglia calibrata per RETRIEVAL_QUERY + COSINE
+        query: str,
+        qdrant_client: QdrantClient,
+        gemini_client: Client,
+        score_threshold: float = 0.35,  # Soglia calibrata per RETRIEVAL_QUERY + COSINE
 ) -> list[str]:
     cleaned_query = clean_text(query)
 
@@ -163,7 +165,7 @@ def get_chunks(
 
     response = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
-        query=[float(value) for value in (embed_response.embeddings[0].values or [])], # type: ignore[arg-type]
+        query=[float(value) for value in (embed_response.embeddings[0].values or [])],  # type: ignore[arg-type]
         limit=QUERY_POINTS_LIMIT,
         score_threshold=SCORE_THRESHOLD,
         with_payload=True,

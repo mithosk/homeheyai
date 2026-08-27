@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 from google.genai import Client
 from qdrant_client import QdrantClient
-from google.genai.types import EmbedContentConfig
+from google.genai.types import EmbedContentConfig, Content, Part
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
@@ -24,57 +24,45 @@ def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
-def save_chunks(
-        chunk_batch: list[dict],
-        qdrant_client: QdrantClient,
-        gemini_client: Client,
-):
-    if not chunk_batch:
-        return
-
-    points = []
-
-    for chunk in chunk_batch:
-        embed_response = gemini_client.models.embed_content(
-            model=EMBEDDING_MODEL,
-            contents=f"{chunk['pattern']}\n{chunk['value']}",
-            config=EmbedContentConfig(
-                output_dimensionality=VECTOR_SIZE,
-                task_type="RETRIEVAL_DOCUMENT",
-            ),
+def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemini_client: Client):
+    contents = [
+        Content(
+            parts=[
+                Part.from_text(
+                    text=f"{chunk["pattern"]}\n{chunk["value"]}"
+                )
+            ]
         )
+        for chunk in chunk_batch
+    ]
 
-        embeddings = embed_response.embeddings or []
-
-        if not embeddings:
-            print(f"WARNING: nessun embedding per {chunk['pattern']}")
-            continue
-
-        embedding = embeddings[0]
-
-        points.append(
-            PointStruct(
-                id=str(uuid.uuid4()),
-                vector=[float(value) for value in (embedding.values or [])],
-                payload={
-                    "pattern": chunk["pattern"],
-                    "value": chunk["value"],
-                },
-            )
+    embed_response = gemini_client.models.embed_content(
+        model=EMBEDDING_MODEL,
+        contents=contents,
+        config=EmbedContentConfig(
+            output_dimensionality=VECTOR_SIZE
         )
+    )
 
-    if not points:
-        return
+    points = [
+        PointStruct(
+            id=uuid.uuid4(),
+            vector=[float(value) for value in (embedding.values or [])],
+            payload={
+                "pattern": chunk["pattern"],
+                "value": chunk["value"]
+            }
+        )
+        for chunk, embedding in zip(chunk_batch, embed_response.embeddings or [])
+    ]
 
     qdrant_client.upsert(
         collection_name=COLLECTION_NAME,
-        points=points,
+        points=points
     )
 
-    print(f"Salvati {len(points)} chunk in Qdrant.")
+    print(f"Saved {len(chunk_batch)} chunks")
 
-
-# 00003----------> MER
 
 def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_client: Client):
     print(f"Start refreshing chunks from: {directory_path}")
@@ -116,11 +104,11 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
                 total_chunks_created += 1
 
             if len(chunk_batch) >= BATCH_SIZE:
-                save_chunks(chunk_batch, qdrant_client, gemini_client)
+                save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
                 chunk_batch.clear()
 
     if chunk_batch:
-        save_chunks(chunk_batch, qdrant_client, gemini_client)
+        save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
 
     info = qdrant_client.get_collection(COLLECTION_NAME)
     print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")

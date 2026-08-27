@@ -65,63 +65,48 @@ def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemin
 
 
 def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_client: Client):
-    print(f"Start refreshing chunks from: {directory_path}")
+    print(f"Start of refreshing chunks from {directory_path}")
 
     qdrant_client.delete_collection(COLLECTION_NAME)
     qdrant_client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config=VectorParams(
             size=VECTOR_SIZE,
-            distance=Distance.COSINE,
-        ),
+            distance=Distance.COSINE
+        )
     )
 
-    print(f"Cleaned collection '{COLLECTION_NAME}'")
+    print(f"Cleaned collection {COLLECTION_NAME}")
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
+        chunk_overlap=CHUNK_OVERLAP
     )
 
     chunk_batch: list[dict] = []
-    total_chunks_created = 0
 
     for file_path in Path(directory_path).rglob("*.md"):
         file_text = file_path.read_text(encoding="utf-8")
         cleaned_file_text = clean_text(file_text)
-        chunks = text_splitter.split_text(cleaned_file_text)
+        splitted_file_text = text_splitter.split_text(cleaned_file_text)
 
-        rel_path = file_path.relative_to(directory_path)
+        for i, file_text_part in enumerate(splitted_file_text):
+            stripped_file_text_part = file_text_part.strip()
 
-        for i, chunk in enumerate(chunks):
-            chunk_text = chunk.strip()
-
-            if len(chunk_text) >= MIN_CHUNK_LEN:
+            if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
                 chunk_batch.append({
-                    "pattern": f"{rel_path}/{i}",
-                    "value": chunk_text,
+                    "pattern": f"{file_path.relative_to(directory_path)}/{i}",
+                    "value": stripped_file_text_part
                 })
-                total_chunks_created += 1
 
-            if len(chunk_batch) >= BATCH_SIZE:
-                save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
-                chunk_batch.clear()
+                if len(chunk_batch) == BATCH_SIZE:
+                    save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
+                    chunk_batch.clear()
 
     if chunk_batch:
         save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
 
-    info = qdrant_client.get_collection(COLLECTION_NAME)
-    print(f"End of refresh. Generati: {total_chunks_created} | Punti totali in Qdrant: {info.points_count}\n")
-
-    xxxxx = get_chunks("qwbd wq qewhbd he bdhe lion and superman jwdvn rwjvn rjwn vrj wjiev", qdrant_client,
-                       gemini_client)
-    print(f"\n\n\n\n\n\n---------->{len(xxxxx)}")
-    for chunk in xxxxx:
-        print(f"\n£££££££££££££££££££££££££££££££££££££")
-        print(f"\n- {chunk}")
-
-
-# 00004----------> GIO
+    print(f"End of refreshing chunks from {directory_path}\n")
 
 
 def get_chunks(

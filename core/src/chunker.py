@@ -29,7 +29,7 @@ def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemin
         Content(
             parts=[
                 Part.from_text(
-                    text=f"{chunk["pattern"]}\n{chunk["value"]}"
+                    text=f"{chunk["pattern"]}\n\n{chunk["value"]}"
                 )
             ]
         )
@@ -90,12 +90,12 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
         cleaned_file_text = clean_text(file_text)
         splitted_file_text = text_splitter.split_text(cleaned_file_text)
 
-        for i, file_text_part in enumerate(splitted_file_text):
+        for file_text_part in splitted_file_text:
             stripped_file_text_part = file_text_part.strip()
 
             if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
                 chunk_batch.append({
-                    "pattern": f"{file_path.relative_to(directory_path)}/{i}",
+                    "pattern": file_path.relative_to(directory_path),
                     "value": stripped_file_text_part
                 })
 
@@ -109,38 +109,28 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
     print(f"End of refreshing chunks from {directory_path}\n")
 
 
-def get_chunks(
-        query: str,
-        qdrant_client: QdrantClient,
-        gemini_client: Client,
-        score_threshold: float = 0.35,  # Soglia calibrata per RETRIEVAL_QUERY + COSINE
-) -> list[str]:
+def generate_text(query: str, qdrant_client: QdrantClient, gemini_client: Client) -> str:
     cleaned_query = clean_text(query)
 
     embed_response = gemini_client.models.embed_content(
         model=EMBEDDING_MODEL,
         contents=cleaned_query,
         config=EmbedContentConfig(
-            output_dimensionality=VECTOR_SIZE,
-            task_type="RETRIEVAL_QUERY"  # Ottimizzato per query di ricerca
-        ),
+            output_dimensionality=VECTOR_SIZE
+        )
     )
 
-    response = qdrant_client.query_points(
+    qdrant_response = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
-        query=[float(value) for value in (embed_response.embeddings[0].values or [])],  # type: ignore[arg-type]
+        query=[float(value) for value in (embed_response.embeddings[0].values or [])],
         limit=QUERY_POINTS_LIMIT,
         score_threshold=SCORE_THRESHOLD,
-        with_payload=True,
+        with_payload=True
     )
 
-    result: list[str] = []
+    values = []
+    for point in qdrant_response.points:
+        if point.payload:
+            values.append(point.payload["value"])
 
-    for point in response.points:
-        print(f"DEBUG - Match trovato | Score: {point.score:.4f} | ID: {point.id}")
-        if point.payload and isinstance(point.payload.get("value"), str):
-            result.append(point.payload["value"])
-
-    return result
-
-# 00005----------> VEN
+    return "\n\n".join(values)

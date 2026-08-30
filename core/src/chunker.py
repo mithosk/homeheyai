@@ -7,18 +7,16 @@ from google.genai.types import EmbedContentConfig, Content, Part
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-BATCH_SIZE = 100
+CHUNK_BATCH_SIZE = 100
 CHUNK_OVERLAP = 150
 CHUNK_SIZE = 1000
-COLLECTION_NAME = "knowledge"
+DB_COLLECTION_NAME = "knowledge"
+DB_VECTOR_SIZE = 3072
 EMBEDDING_MODEL = "gemini-embedding-2"
-MIN_CHUNK_LEN = 30
+MIN_CHUNK_VALUE_LEN = 30
 QUERY_POINTS_LIMIT = 5
-SCORE_THRESHOLD = 0.45
-VECTOR_SIZE = 3072
+QUERY_POINTS_SCORE_THRESHOLD = 0.45
 
-
-# 00006----------> SAB
 
 def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
@@ -40,7 +38,7 @@ def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemin
         model=EMBEDDING_MODEL,
         contents=contents,
         config=EmbedContentConfig(
-            output_dimensionality=VECTOR_SIZE
+            output_dimensionality=DB_VECTOR_SIZE
         )
     )
 
@@ -57,7 +55,7 @@ def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemin
     ]
 
     qdrant_client.upsert(
-        collection_name=COLLECTION_NAME,
+        collection_name=DB_COLLECTION_NAME,
         points=points
     )
 
@@ -67,20 +65,20 @@ def save_chunk_batch(chunk_batch: list[dict], qdrant_client: QdrantClient, gemin
 def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_client: Client):
     print(f"Start of refreshing chunks from {directory_path}")
 
-    qdrant_client.delete_collection(COLLECTION_NAME)
+    qdrant_client.delete_collection(DB_COLLECTION_NAME)
     qdrant_client.create_collection(
-        collection_name=COLLECTION_NAME,
+        collection_name=DB_COLLECTION_NAME,
         vectors_config=VectorParams(
-            size=VECTOR_SIZE,
+            size=DB_VECTOR_SIZE,
             distance=Distance.COSINE
         )
     )
 
-    print(f"Cleaned collection {COLLECTION_NAME}")
+    print(f"Cleaned collection {DB_COLLECTION_NAME}")
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP
+        chunk_overlap=CHUNK_OVERLAP,
+        chunk_size=CHUNK_SIZE
     )
 
     chunk_batch: list[dict] = []
@@ -93,13 +91,13 @@ def refresh_chunks(directory_path: str, qdrant_client: QdrantClient, gemini_clie
         for file_text_part in splitted_file_text:
             stripped_file_text_part = file_text_part.strip()
 
-            if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
+            if len(stripped_file_text_part) >= MIN_CHUNK_VALUE_LEN:
                 chunk_batch.append({
                     "pattern": file_path.relative_to(directory_path),
                     "value": stripped_file_text_part
                 })
 
-                if len(chunk_batch) == BATCH_SIZE:
+                if len(chunk_batch) == CHUNK_BATCH_SIZE:
                     save_chunk_batch(chunk_batch, qdrant_client, gemini_client)
                     chunk_batch.clear()
 
@@ -116,15 +114,15 @@ def generate_text(query: str, qdrant_client: QdrantClient, gemini_client: Client
         model=EMBEDDING_MODEL,
         contents=cleaned_query,
         config=EmbedContentConfig(
-            output_dimensionality=VECTOR_SIZE
+            output_dimensionality=DB_VECTOR_SIZE
         )
     )
 
     qdrant_response = qdrant_client.query_points(
-        collection_name=COLLECTION_NAME,
+        collection_name=DB_COLLECTION_NAME,
         query=[float(value) for value in (embed_response.embeddings[0].values or [])],
         limit=QUERY_POINTS_LIMIT,
-        score_threshold=SCORE_THRESHOLD,
+        score_threshold=QUERY_POINTS_SCORE_THRESHOLD,
         with_payload=True
     )
 

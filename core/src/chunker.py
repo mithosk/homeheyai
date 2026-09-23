@@ -17,7 +17,6 @@ MIN_CHUNK_LEN = 30
 
 class Chunker:
 
-    #TRE
     def __init__(self, db_client: DBClient, ai_client: AIClient):
         self.db_client = db_client
         self.ai_client = ai_client

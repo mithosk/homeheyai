@@ -7,12 +7,12 @@ from db_client import DBClient
 from ai_client import AIClient
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 
-# DUE + NOVE
+# NOVE
 CHUNK_BATCH_SIZE = 100
 CHUNK_OVERLAP = 150
 CHUNK_SIZE = 1000
 DB_COLLECTION_NAME = "knowledge"
-MIN_CHUNK_VALUE_LEN = 30
+MIN_CHUNK_LEN = 30
 
 
 class Chunker:
@@ -73,7 +73,7 @@ class Chunker:
             for file_text_part in splitted_file_text:
                 stripped_file_text_part = file_text_part.strip()
 
-                if len(stripped_file_text_part) >= MIN_CHUNK_VALUE_LEN:
+                if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
                     chunk_batch.append({
                         "pattern": file_path.relative_to(directory_path),
                         "value": stripped_file_text_part

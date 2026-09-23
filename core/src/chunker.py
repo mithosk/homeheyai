@@ -1,4 +1,4 @@
-# UNO + OTTO
+# OTTO
 import re
 import uuid
 from point import Point

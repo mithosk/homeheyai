@@ -21,7 +21,6 @@ class Chunker:
         self.db_client = db_client
         self.ai_client = ai_client
 
-    #QUATTRO
     @staticmethod
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()

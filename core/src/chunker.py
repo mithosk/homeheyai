@@ -25,12 +25,11 @@ class Chunker:
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()
 
-    #CINQUE
     def _save_chunk_batch(self, chunk_batch: list[dict]):
         vectors = self.ai_client.embed(
             texts=[
-                f"{chunk["pattern"]}\n\n{chunk["value"]}"
-                for chunk in chunk_batch
+                f"{chunk_item["pattern"]}\n\n{chunk_item["value"]}"
+                for chunk_item in chunk_batch
             ]
         )
 
@@ -38,15 +37,13 @@ class Chunker:
             points=[
                 Point(
                     id=str(uuid.uuid4()),
-                    chunk=chunk["value"],
+                    chunk=chunk_item["value"],
                     vector=vector
                 )
-                for chunk, vector in zip(chunk_batch, vectors)
+                for chunk_item, vector in zip(chunk_batch, vectors)
             ],
-            collection_name=DB_COLLECTION_NAME,
+            collection_name=DB_COLLECTION_NAME
         )
-
-        print(f"Saved {len(chunk_batch)} chunks")
 
     #SEI
     def refresh_chunks(self, directory_path: str):

@@ -12,8 +12,8 @@ CHUNK_SIZE = 1000
 DB_COLLECTION_NAME = "knowledge"
 MIN_CHUNK_LEN = 30
 
-class Chunker:
 
+class Chunker:
     def __init__(self, db_client: DBClient, ai_client: AIClient):
         self.db_client = db_client
         self.ai_client = ai_client
@@ -25,21 +25,17 @@ class Chunker:
     def _save_chunk_batch(self, chunk_batch: list[dict]):
         vectors = self.ai_client.embed(
             texts=[
-                f"{chunk_item["pattern"]}\n\n{chunk_item["value"]}"
+                f"{chunk_item['pattern']}\n\n{chunk_item['value']}"
                 for chunk_item in chunk_batch
             ]
         )
 
         self.db_client.upsert(
             points=[
-                Point(
-                    id=str(uuid.uuid4()),
-                    chunk=chunk_item["value"],
-                    vector=vector
-                )
+                Point(id=str(uuid.uuid4()), chunk=chunk_item["value"], vector=vector)
                 for chunk_item, vector in zip(chunk_batch, vectors)
             ],
-            collection_name=DB_COLLECTION_NAME
+            collection_name=DB_COLLECTION_NAME,
         )
 
     def refresh_chunks(self, directory_path: str):
@@ -48,7 +44,7 @@ class Chunker:
         text_splitter = RecursiveCharacterTextSplitter.from_language(
             chunk_overlap=CHUNK_OVERLAP,
             chunk_size=CHUNK_SIZE,
-            language=Language.MARKDOWN
+            language=Language.MARKDOWN,
         )
 
         chunk_batch: list[dict] = []
@@ -62,10 +58,12 @@ class Chunker:
                 stripped_file_text_part = file_text_part.strip()
 
                 if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
-                    chunk_batch.append({
-                        "pattern": file_path.relative_to(directory_path),
-                        "value": stripped_file_text_part
-                    })
+                    chunk_batch.append(
+                        {
+                            "pattern": file_path.relative_to(directory_path),
+                            "value": stripped_file_text_part,
+                        }
+                    )
 
                     if len(chunk_batch) == CHUNK_BATCH_SIZE:
                         self._save_chunk_batch(chunk_batch)
@@ -75,13 +73,10 @@ class Chunker:
             self._save_chunk_batch(chunk_batch)
 
     def generate_text(self, prompt: str) -> str:
-        vectors = self.ai_client.embed(
-            texts=[self._clean_text(prompt)]
-        )
+        vectors = self.ai_client.embed(texts=[self._clean_text(prompt)])
 
         points = self.db_client.search(
-            vector=vectors[0],
-            collection_name=DB_COLLECTION_NAME
+            vector=vectors[0], collection_name=DB_COLLECTION_NAME
         )
 
         return "\n\n".join(point.chunk for point in points)

@@ -77,22 +77,17 @@ class Chunker:
         if chunk_batch:
             self._save_chunk_batch(chunk_batch)
 
-    #SETTE
-    def generate_text(self, query: str) -> str:
+    def generate_text(self, prompt: str) -> str:
         vectors = self.ai_client.embed(
-            texts=[self._clean_text(query)]
+            texts=[self._clean_text(prompt)]
         )
 
-        qdrant_response = self.db_client.search(
+        points = self.db_client.search(
             vector=vectors[0],
             collection_name=DB_COLLECTION_NAME
         )
 
-        values = []
-        for point in qdrant_response:
-            values.append(point.chunk)
-
-        return "\n\n".join(values)
+        return "\n\n".join(point.chunk for point in points)
 
 # DIECI
 def ciao(knowledge_dir:str, db_client: DBClient, ai_client: AIClient):

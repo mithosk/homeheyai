@@ -85,10 +85,3 @@ class Chunker:
         )
 
         return "\n\n".join(point.chunk for point in points)
-
-# DIECI
-def ciao(knowledge_dir:str, db_client: DBClient, ai_client: AIClient):
-    x=Chunker(db_client=db_client, ai_client=ai_client)
-    x.refresh_chunks(knowledge_dir)
-    y = x.generate_text("karate tiger")
-    print(f"Generated text: {y}")

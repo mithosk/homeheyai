@@ -6,13 +6,11 @@ from db_client import DBClient
 from ai_client import AIClient
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 
-# NOVE
 CHUNK_BATCH_SIZE = 100
 CHUNK_OVERLAP = 150
 CHUNK_SIZE = 1000
 DB_COLLECTION_NAME = "knowledge"
 MIN_CHUNK_LEN = 30
-
 
 class Chunker:
 

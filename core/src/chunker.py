@@ -45,17 +45,13 @@ class Chunker:
             collection_name=DB_COLLECTION_NAME
         )
 
-    #SEI
     def refresh_chunks(self, directory_path: str):
-        print(f"Start of refreshing chunks from {directory_path}")
-
         self.db_client.clean(DB_COLLECTION_NAME)
-        print(f"Cleaned collection {DB_COLLECTION_NAME}")
 
         text_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.MARKDOWN,
             chunk_overlap=CHUNK_OVERLAP,
             chunk_size=CHUNK_SIZE,
+            language=Language.MARKDOWN
         )
 
         chunk_batch: list[dict] = []
@@ -80,8 +76,6 @@ class Chunker:
 
         if chunk_batch:
             self._save_chunk_batch(chunk_batch)
-
-        print(f"End of refreshing chunks from {directory_path}\n")
 
     #SETTE
     def generate_text(self, query: str) -> str:

@@ -15,22 +15,22 @@ MIN_CHUNK_LEN = 30
 
 class Chunker:
     def __init__(self, db_client: DBClient, ai_client: AIClient):
-        self.db_client = db_client
-        self.ai_client = ai_client
+        self._db_client = db_client
+        self._ai_client = ai_client
 
     @staticmethod
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()
 
     def _save_chunk_batch(self, chunk_batch: list[dict]):
-        vectors = self.ai_client.embed(
+        vectors = self._ai_client.embed(
             texts=[
                 f"{chunk_item['pattern']}\n\n{chunk_item['value']}"
                 for chunk_item in chunk_batch
             ]
         )
 
-        self.db_client.upsert(
+        self._db_client.upsert(
             points=[
                 Point(id=str(uuid.uuid4()), chunk=chunk_item["value"], vector=vector)
                 for chunk_item, vector in zip(chunk_batch, vectors)
@@ -39,7 +39,7 @@ class Chunker:
         )
 
     def refresh_chunks(self, directory_path: str):
-        self.db_client.clean(DB_COLLECTION_NAME)
+        self._db_client.clean(DB_COLLECTION_NAME)
 
         text_splitter = RecursiveCharacterTextSplitter.from_language(
             chunk_overlap=CHUNK_OVERLAP,
@@ -73,9 +73,9 @@ class Chunker:
             self._save_chunk_batch(chunk_batch)
 
     def generate_text(self, prompt: str) -> str:
-        vectors = self.ai_client.embed(texts=[self._clean_text(prompt)])
+        vectors = self._ai_client.embed(texts=[self._clean_text(prompt)])
 
-        points = self.db_client.search(
+        points = self._db_client.search(
             vector=vectors[0], collection_name=DB_COLLECTION_NAME
         )
 

@@ -4,6 +4,7 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 DB_VECTOR_SIZE = 3072
 QUERY_POINTS_LIMIT = 5
+SCORE_THRESHOLD = 0.58
 
 
 class DBClient:
@@ -37,6 +38,7 @@ class DBClient:
         query_result = self._client.query_points(
             collection_name=collection_name,
             query=vector,
+            score_threshold=SCORE_THRESHOLD,
             limit=QUERY_POINTS_LIMIT,
             with_payload=True,
         )

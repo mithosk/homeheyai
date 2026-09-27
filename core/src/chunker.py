@@ -13,23 +13,15 @@ MIN_CHUNK_LEN = 30
 
 
 class Chunker:
-    def __init__(
-        self,
-        db_client: DBClient,
-        ai_client: AIClient,
-        collection_name: str,
-        directory_path: str,
-    ):
+    def __init__(self, db_client: DBClient, ai_client: AIClient):
         self._db_client = db_client
         self._ai_client = ai_client
-        self._collection_name = collection_name
-        self._directory_path = directory_path
 
     @staticmethod
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()
 
-    def _save_chunk_batch(self, chunk_batch: list[dict]):
+    def _save_chunk_batch(self, chunk_batch: list[dict], collection_name: str):
         vectors = self._ai_client.embed(
             texts=[
                 f"{chunk_item['pattern']}\n\n{chunk_item['value']}"
@@ -42,11 +34,11 @@ class Chunker:
                 Point(id=str(uuid.uuid4()), chunk=chunk_item["value"], vector=vector)
                 for chunk_item, vector in zip(chunk_batch, vectors)
             ],
-            collection_name=self._collection_name,
+            collection_name=collection_name,
         )
 
-    def refresh_chunks(self):
-        self._db_client.clean(self._collection_name)
+    def refresh_chunks(self, directory_path: str, collection_name: str):
+        self._db_client.clean(collection_name)
 
         text_splitter = RecursiveCharacterTextSplitter.from_language(
             chunk_overlap=CHUNK_OVERLAP,
@@ -56,7 +48,7 @@ class Chunker:
 
         chunk_batch: list[dict] = []
 
-        for file_path in Path(self._directory_path).rglob("*.md"):
+        for file_path in Path(directory_path).rglob("*.md"):
             file_text = file_path.read_text(encoding="utf-8")
             cleaned_file_text = self._clean_text(file_text)
             splitted_file_text = text_splitter.split_text(cleaned_file_text)
@@ -67,23 +59,23 @@ class Chunker:
                 if len(stripped_file_text_part) >= MIN_CHUNK_LEN:
                     chunk_batch.append(
                         {
-                            "pattern": file_path.relative_to(self._directory_path),
+                            "pattern": file_path.relative_to(directory_path),
                             "value": stripped_file_text_part,
                         }
                     )
 
                     if len(chunk_batch) == CHUNK_BATCH_SIZE:
-                        self._save_chunk_batch(chunk_batch, self._collection_name)
+                        self._save_chunk_batch(chunk_batch, collection_name)
                         chunk_batch.clear()
 
         if chunk_batch:
-            self._save_chunk_batch(chunk_batch, self._collection_name)
+            self._save_chunk_batch(chunk_batch, collection_name)
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, collection_name: str) -> str:
         vectors = self._ai_client.embed(texts=[self._clean_text(prompt)])
 
         points = self._db_client.search(
-            vector=vectors[0], collection_name=self._collection_name
+            vector=vectors[0], collection_name=collection_name
         )
 
         return "\n\n".join(point.chunk for point in points)

@@ -65,11 +65,11 @@ class Chunker:
                     )
 
                     if len(chunk_batch) == CHUNK_BATCH_SIZE:
-                        self._save_chunk_batch(chunk_batch)
+                        self._save_chunk_batch(chunk_batch, collection_name)
                         chunk_batch.clear()
 
         if chunk_batch:
-            self._save_chunk_batch(chunk_batch)
+            self._save_chunk_batch(chunk_batch, collection_name)
 
     def generate_text(self, prompt: str, collection_name: str) -> str:
         vectors = self._ai_client.embed(texts=[self._clean_text(prompt)])

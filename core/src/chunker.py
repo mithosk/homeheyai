@@ -9,7 +9,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 CHUNK_BATCH_SIZE = 100
 CHUNK_OVERLAP = 150
 CHUNK_SIZE = 1000
-DB_COLLECTION_NAME = "knowledge"
 MIN_CHUNK_LEN = 30
 
 
@@ -22,7 +21,7 @@ class Chunker:
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()
 
-    def _save_chunk_batch(self, chunk_batch: list[dict]):
+    def _save_chunk_batch(self, chunk_batch: list[dict], collection_name: str):
         vectors = self._ai_client.embed(
             texts=[
                 f"{chunk_item['pattern']}\n\n{chunk_item['value']}"
@@ -35,11 +34,11 @@ class Chunker:
                 Point(id=str(uuid.uuid4()), chunk=chunk_item["value"], vector=vector)
                 for chunk_item, vector in zip(chunk_batch, vectors)
             ],
-            collection_name=DB_COLLECTION_NAME,
+            collection_name=collection_name,
         )
 
-    def refresh_chunks(self, directory_path: str):
-        self._db_client.clean(DB_COLLECTION_NAME)
+    def refresh_chunks(self, directory_path: str, collection_name: str):
+        self._db_client.clean(collection_name)
 
         text_splitter = RecursiveCharacterTextSplitter.from_language(
             chunk_overlap=CHUNK_OVERLAP,
@@ -72,11 +71,11 @@ class Chunker:
         if chunk_batch:
             self._save_chunk_batch(chunk_batch)
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, collection_name: str) -> str:
         vectors = self._ai_client.embed(texts=[self._clean_text(prompt)])
 
         points = self._db_client.search(
-            vector=vectors[0], collection_name=DB_COLLECTION_NAME
+            vector=vectors[0], collection_name=collection_name
         )
 
         return "\n\n".join(point.chunk for point in points)

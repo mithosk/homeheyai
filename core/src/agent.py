@@ -2,6 +2,8 @@ import time
 from chunker import Chunker
 from ai_client import AIClient
 
+MAX_RETRIES = 3
+
 
 class Agent:
     def __init__(
@@ -19,7 +21,6 @@ class Agent:
 
     def respond(self, prompt: str) -> str:
         retry = 0
-        max_retries = 3
 
         while True:
             try:
@@ -32,7 +33,7 @@ class Agent:
                     instruction=self._instruction,
                 )
             except Exception as exception:
-                if retry == max_retries:
+                if retry == MAX_RETRIES:
                     raise exception
 
                 time.sleep(++retry)

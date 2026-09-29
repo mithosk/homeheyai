@@ -36,4 +36,5 @@ class Agent:
                 if retry == MAX_RETRIES:
                     raise exception
 
-                time.sleep(++retry)
+                retry += 1
+                time.sleep(retry)

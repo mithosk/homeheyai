@@ -2,7 +2,7 @@ import time
 from chunker import Chunker
 from ai_client import AIClient
 
-MAX_RETRIES = 3
+MAX_RETRIES = 5
 
 
 class Agent:

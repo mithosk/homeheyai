@@ -7,7 +7,7 @@ from chat_completion_request import ChatCompletionRequest
 
 
 class OpenAIRouter:
-    def __init__(self):
+    def __init__(self) -> None:
         self._router = APIRouter()
         self._router.add_api_route("/models", self._models, methods=["GET"])
         self._router.add_api_route(

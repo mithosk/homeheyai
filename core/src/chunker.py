@@ -13,7 +13,7 @@ MIN_CHUNK_LEN = 30
 
 
 class Chunker:
-    def __init__(self, db_client: DBClient, ai_client: AIClient):
+    def __init__(self, db_client: DBClient, ai_client: AIClient) -> None:
         self._db_client = db_client
         self._ai_client = ai_client
 

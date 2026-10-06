@@ -21,7 +21,7 @@ class Chunker:
     def _clean_text(text: str) -> str:
         return re.sub(r"\n{3,}", "\n\n", text).strip()
 
-    def _save_chunk_batch(self, chunk_batch: list[dict], collection_name: str):
+    def _save_chunk_batch(self, chunk_batch: list[dict], collection_name: str) -> None:
         vectors = self._ai_client.embed(
             texts=[
                 f"{chunk_item['pattern']}\n\n{chunk_item['value']}"
@@ -37,7 +37,7 @@ class Chunker:
             collection_name=collection_name,
         )
 
-    def refresh_chunks(self, directory_path: str, collection_name: str):
+    def refresh_chunks(self, directory_path: str, collection_name: str) -> None:
         self._db_client.clean(collection_name)
 
         text_splitter = RecursiveCharacterTextSplitter.from_language(

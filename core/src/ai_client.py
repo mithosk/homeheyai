@@ -7,7 +7,7 @@ from google.genai.types import (
 )
 
 EMBEDDING_MODEL = "gemini-embedding-2"
-GENERATIVE_MODEL = "gemini-3.8-flash"
+GENERATIVE_MODEL = "gemini-3.5-flash-lite"
 GENERATIVE_TEMPERATURE = 0.5
 
 

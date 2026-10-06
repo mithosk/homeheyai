@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from ai_client import AIClient
 from db_client import DBClient
 from dotenv import load_dotenv
-from open_ai_routes import OpenAIRoutes
-from contextlib import asynccontextmanager
+from typing import AsyncIterator
+from open_ai_router import OpenAIRouter
 from starlette.concurrency import run_in_threadpool
 
 
@@ -20,7 +20,7 @@ def build_agents() -> list[Agent]:
 
     ai_client = AIClient(api_key=os.getenv("GEMINI_API_KEY"))
 
-    chunker = Chunker(db_client, ai_client)
+    chunker = Chunker(db_client=db_client, ai_client=ai_client)
 
     agents_json = json.loads(
         (Path(os.getenv("DEFINE_DIR")) / "agents.json").read_text(encoding="utf-8")
@@ -43,13 +43,12 @@ def build_agents() -> list[Agent]:
     return agents
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.agents = await run_in_threadpool(build_agents)
     yield
 
 
 load_dotenv()
 app = FastAPI(title="HomeHeyAI", lifespan=lifespan)
-app.include_router(OpenAIRoutes().router)
+OpenAIRouter().mount(app)
 uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("FASTAPI_PORT")))

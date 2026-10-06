@@ -8,7 +8,7 @@ SCORE_THRESHOLD = 0.5
 
 
 class DBClient:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int) -> None:
         self._client = QdrantClient(host=host, port=port)
 
     def upsert(self, points: list[Point], collection_name: str) -> None:

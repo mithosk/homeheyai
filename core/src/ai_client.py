@@ -12,7 +12,7 @@ GENERATIVE_TEMPERATURE = 0.5
 
 
 class AIClient:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str) -> None:
         self._client = Client(api_key=api_key)
 
     def generate(self, prompt: str, instruction: str) -> str:

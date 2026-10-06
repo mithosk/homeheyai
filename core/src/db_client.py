@@ -35,6 +35,9 @@ class DBClient:
         )
 
     def search(self, vector: list[float], collection_name: str) -> list[Point]:
+        if not self._client.collection_exists(collection_name):
+            return []
+
         query_result = self._client.query_points(
             collection_name=collection_name,
             query=vector,

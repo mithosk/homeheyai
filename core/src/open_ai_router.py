@@ -62,5 +62,5 @@ class OpenAIRouter:
             "usage": None,
         }
 
-    def mount(self, app: FastAPI):
+    def mount(self, app: FastAPI) -> None:
         app.include_router(self._router)

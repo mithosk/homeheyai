@@ -11,7 +11,7 @@ class DBClient:
     def __init__(self, host: str, port: int):
         self._client = QdrantClient(host=host, port=port)
 
-    def upsert(self, points: list[Point], collection_name: str):
+    def upsert(self, points: list[Point], collection_name: str) -> None:
         if not self._client.collection_exists(collection_name):
             self._client.create_collection(
                 collection_name=collection_name,
@@ -48,5 +48,5 @@ class DBClient:
             for item in query_result.points
         ]
 
-    def clean(self, collection_name: str):
+    def clean(self, collection_name: str) -> None:
         self._client.delete_collection(collection_name)

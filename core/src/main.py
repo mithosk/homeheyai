@@ -28,11 +28,11 @@ def build_agents() -> list[Agent]:
 
     agents = [
         Agent(
-            name=(cleaned_name := agent_json["name"].strip().replace(" ", "_").lower()),
+            name=agent_json["name"],
             instruction=agent_json["instruction"],
             ai_client=ai_client,
             chunker=chunker,
-            knowledge_dir=f"{os.getenv('DEFINE_DIR')}/{cleaned_name}",
+            knowledge_dir=f"{os.getenv('DEFINE_DIR')}/{agent_json['name']}",
         )
         for agent_json in agents_json
     ]

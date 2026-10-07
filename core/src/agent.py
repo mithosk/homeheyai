@@ -12,6 +12,7 @@ class Agent:
         knowledge_dir: str,
     ) -> None:
         self._name = name
+        self._collection_name = name.strip().replace(" ", "_").lower()
         self._instruction = instruction
         self._ai_client = ai_client
         self._chunker = chunker
@@ -23,12 +24,13 @@ class Agent:
 
     def load(self) -> None:
         self._chunker.refresh_chunks(
-            directory_path=f"{self._knowledge_dir}", collection_name=self._name
+            directory_path=self._knowledge_dir,
+            collection_name=self._collection_name,
         )
 
     def respond(self, prompt: str) -> str:
         rag_text = self._chunker.generate_text(
-            prompt=prompt, collection_name=self._name
+            prompt=prompt, collection_name=self._collection_name
         )
 
         return self._ai_client.generate(
